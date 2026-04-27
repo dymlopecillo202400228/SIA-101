@@ -1,204 +1,138 @@
-const express = require('express')
-const path = require('path')
-const cors = require('cors')
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
 
-const app = express()
-const port = 3000
+const app = express();
+const PORT = 3000;
 
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
 
-app.use(cors())
-app.use(express.json())
-app.use(express.static(path.join(__dirname, 'public')))
+/* ================= DATABASE ================= */
+let users = [];
+let riders = [];
+let rides = [];
 
+let userId = 1;
+let riderId = 1;
+let rideId = 1;
 
-let students = [ 
-    {
-        id: 1,
-        name: "Gaton",
-        yearlevel: 1
-    },
-    {
-        id: 2,
-        name: "Lopez",
-        yearlevel: 2
-    },
-    {
-        id: 3,
-        name: "Santos",
-        yearlevel: 3
-    }
-]
+/* ================= ROOT ================= */
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
+/* ================= USER ================= */
+app.post("/api/users/register", (req, res) => {
+  const { name, email, password } = req.body;
 
-app.get('/api/students', (req, res) => {
-    res.json(students)
-})
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: "All fields required" });
+  }
 
+  const user = { id: userId++, name, email, password };
+  users.push(user);
 
-app.get('/api/students/:id', (req, res) => {
-    const id = parseInt(req.params.id)
+  res.status(201).json({ message: "User registered", user });
+});
 
-    if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid ID" })
-    }
+app.get("/api/users", (req, res) => {
+  res.json(users);
+});
 
-    const student = students.find(s => s.id === id)
+/* ================= RIDER ================= */
+app.post("/api/riders/register", (req, res) => {
+  const { name, motorcycle, plateNumber } = req.body;
 
-    if (!student) {const express = require('express')
-    const path = require('path')
-    const cors = require('cors')
-    
-    const app = express()
-    const port = 3000
-    
-    app.use(cors())
-    app.use(express.json())
-    app.use(express.static(path.join(__dirname, 'public')))
-    
-    // DATA
-    let students = [
-        { id: 1, name: "Gaton", yearlevel: 1 },
-        { id: 2, name: "Lopez", yearlevel: 2 },
-        { id: 3, name: "Santos", yearlevel: 3 }
-    ]
-    
-    
-    app.get('/api/students', (req, res) => {
-        res.json(students)
-    })
+  if (!name || !motorcycle || !plateNumber) {
+    return res.status(400).json({ message: "All fields required" });
+  }
 
-    app.get('/api/students/:id', (req, res) => {
-        const id = parseInt(req.params.id)
-        const student = students.find(s => s.id === id)
-    
-        if (!student) return res.status(404).json({ message: "Student not found" })
-    
-        res.json(student)
-    })
-    
-    
-    app.post('/api/students', (req, res) => {
-        const { name, yearlevel } = req.body
-    
-        if (!name || !yearlevel) {
-            return res.status(400).json({ message: "Name and yearlevel required" })
-        }
-    
-        const newStudent = {
-            id: students.length ? students[students.length - 1].id + 1 : 1,
-            name,
-            yearlevel
-        }
-    
-        students.push(newStudent)
-    
-        res.status(201).json(newStudent)
-    })
-    
+  const rider = {
+    id: riderId++,
+    name,
+    motorcycle,
+    plateNumber,
+    available: true
+  };
 
-    app.put('/api/students/:id', (req, res) => {
-        const id = parseInt(req.params.id)
-        const { name, yearlevel } = req.body
-    
-        const student = students.find(s => s.id === id)
-        if (!student) return res.status(404).json({ message: "Student not found" })
-    
-        if (name) student.name = name
-        if (yearlevel) student.yearlevel = yearlevel
-    
-        res.json(student)
-    })
-    
-   
-    app.delete('/api/students/:id', (req, res) => {
-        const id = parseInt(req.params.id)
-    
-        const index = students.findIndex(s => s.id === id)
-        if (index === -1) return res.status(404).json({ message: "Student not found" })
-    
-        const deleted = students.splice(index, 1)
-    
-        res.json(deleted[0])
-    })
-    
-    app.listen(port, () => {
-        console.log(`Server running at http://localhost:${port}`)
-    })
-        return res.status(404).json({ message: "Student not found" })
-    }
+  riders.push(rider);
 
-    res.json(student)
-})
+  res.status(201).json({ message: "Rider registered", rider });
+});
 
+app.get("/api/riders", (req, res) => {
+  res.json(riders);
+});
 
-app.post('/api/students', (req, res) => {
-    const { name, yearlevel } = req.body
+/* ================= BOOK RIDE ================= */
+app.post("/api/rides/book", (req, res) => {
+  const { userId: uid, pickupLocation, dropoffLocation } = req.body;
 
-    if (!name || !yearlevel) {
-        return res.status(400).json({ message: "Name and yearlevel are required" })
-    }
+  if (!uid || !pickupLocation || !dropoffLocation) {
+    return res.status(400).json({ message: "All fields required" });
+  }
 
-    const newStudent = {
-        id: students.length ? students[students.length - 1].id + 1 : 1,
-        name,
-        yearlevel
-    }
+  const user = users.find(u => u.id === Number(uid));
+  if (!user) return res.status(404).json({ message: "User not found" });
 
-    students.push(newStudent)
+  const rider = riders.find(r => r.available);
 
-    res.status(201).json({
-        message: "Student added successfully",
-        student: newStudent
-    })
-})
+  const ride = {
+    id: rideId++,
+    userId: Number(uid),
+    riderId: rider ? rider.id : null,
+    pickupLocation,
+    dropoffLocation,
+    status: rider ? "on-going" : "pending"
+  };
 
+  if (rider) rider.available = false;
 
-app.put('/api/students/:id', (req, res) => {
-    const id = parseInt(req.params.id)
-    const { name, yearlevel } = req.body
+  rides.push(ride);
 
-    if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid ID" })
-    }
+  res.status(201).json({ message: "Ride booked", ride });
+});
 
-    const student = students.find(s => s.id === id)
+/* ================= COMPLETE ================= */
+app.put("/api/rides/:id/complete", (req, res) => {
+  const ride = rides.find(r => r.id === Number(req.params.id));
 
-    if (!student) {
-        return res.status(404).json({ message: "Student not found" })
-    }
+  if (!ride) return res.status(404).json({ message: "Ride not found" });
 
-    if (name) student.name = name
-    if (yearlevel) student.yearlevel = yearlevel
+  ride.status = "completed";
 
-    res.json({
-        message: "Student updated successfully",
-        student
-    })
-})
+  const rider = riders.find(r => r.id === ride.riderId);
+  if (rider) rider.available = true;
 
+  res.json({ message: "Ride completed", ride });
+});
 
-app.delete('/api/students/:id', (req, res) => {
-    const id = parseInt(req.params.id)
+/* ================= CANCEL ================= */
+app.delete("/api/rides/:id", (req, res) => {
+  const index = rides.findIndex(r => r.id === Number(req.params.id));
 
-    if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid ID" })
-    }
+  if (index === -1) {
+    return res.status(404).json({ message: "Ride not found" });
+  }
 
-    const index = students.findIndex(s => s.id === id)
+  const ride = rides[index];
 
-    if (index === -1) {
-        return res.status(404).json({ message: "Student not found" })
-    }
+  const rider = riders.find(r => r.id === ride.riderId);
+  if (rider) rider.available = true;
 
-    const deletedStudent = students.splice(index, 1)
+  rides.splice(index, 1);
 
-    res.json({
-        message: "Student deleted successfully",
-        student: deletedStudent[0]
-    })
-})
+  res.json({ message: "Ride cancelled" });
+});
 
+/* ================= VIEW ================= */
+app.get("/api/rides", (req, res) => {
+  res.json(rides);
+});
 
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`)
-})
+/* ================= START ================= */
+app.listen(PORT, () => {
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
+});
