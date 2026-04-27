@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-/* ================= DATABASE ================= */
+
 let users = [];
 let riders = [];
 let rides = [];
@@ -66,7 +66,6 @@ app.get("/api/riders", (req, res) => {
   res.json(riders);
 });
 
-/* ================= BOOK RIDE ================= */
 app.post("/api/rides/book", (req, res) => {
   const { userId: uid, pickupLocation, dropoffLocation } = req.body;
 
@@ -95,7 +94,7 @@ app.post("/api/rides/book", (req, res) => {
   res.status(201).json({ message: "Ride booked", ride });
 });
 
-/* ================= COMPLETE ================= */
+
 app.put("/api/rides/:id/complete", (req, res) => {
   const ride = rides.find(r => r.id === Number(req.params.id));
 
@@ -109,7 +108,7 @@ app.put("/api/rides/:id/complete", (req, res) => {
   res.json({ message: "Ride completed", ride });
 });
 
-/* ================= CANCEL ================= */
+
 app.delete("/api/rides/:id", (req, res) => {
   const index = rides.findIndex(r => r.id === Number(req.params.id));
 
@@ -127,12 +126,12 @@ app.delete("/api/rides/:id", (req, res) => {
   res.json({ message: "Ride cancelled" });
 });
 
-/* ================= VIEW ================= */
+
 app.get("/api/rides", (req, res) => {
   res.json(rides);
 });
 
-/* ================= START ================= */
+
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
